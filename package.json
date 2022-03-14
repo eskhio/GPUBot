@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "chalk": "4.1.2",
+    "dotenv": "^16.0.0",
     "enquirer": "^2.3.6",
     "moment": "^2.29.1",
+    "mongoose": "^6.2.9",
     "ora": "5.4.1",
     "puppeteer-core": "^13.5.1",
     "puppeteer-extra": "^3.2.3",

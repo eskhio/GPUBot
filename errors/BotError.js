@@ -1,7 +1,7 @@
-class DiscordError extends Error {
+class BotError extends Error {
   constructor(details, error) {
     super(error ? error.message : details);
-    // Discord related errors
+    // Bot related errors
     this.details = details;
     // JS errors
     if (error && error.stack) this.stack = error.stack;
@@ -9,4 +9,4 @@ class DiscordError extends Error {
   }
 }
 
-module.exports = DiscordError;
+module.exports = BotError;

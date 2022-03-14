@@ -13,13 +13,14 @@
     "rules": {
         "no-undef": "warn",
         "no-return-assign": "warn",
-        "class-methods-use-this": "warn",
+        "class-methods-use-this": "off",
         "consistent-return": "warn",
         "no-param-reassign": "warn",
         "no-console": "off",
         "array-callback-return": "warn",
         "no-await-in-loop": "off",
         "no-restricted-syntax": "off",
+        "new-cap": "off",
         "max-len": [1, 180, 4]
     }
 }

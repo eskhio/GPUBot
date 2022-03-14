@@ -1,7 +1,7 @@
 const EventEmitter = require('events');
 const moment = require('moment');
 const chalk = require('chalk');
-const conf = require('../conf');
+const Config = require('../Config');
 
 class GPUEvents extends EventEmitter {
   constructor() {
@@ -13,8 +13,8 @@ class GPUEvents extends EventEmitter {
       console.log(
         chalk.hex('#6B8E23')(JSON.stringify({ status: 'Token fetched', date: new moment().format('HH:mm:ss'), token }, null, 4)),
       );
-      conf.authorizations.discord = token;
-      conf.webSockets.discord.payload.d.token = token;
+      Config.setAuthorization('discord', token);
+      Config.setWebSocketToken(token);
     });
     this.on('tokenFetchFail', (error) => {
       this.emitDiscordStatus('Incorrect login', null, error);
