@@ -1,0 +1,25 @@
+{
+    "env": {
+        "es2021": true,
+        "node": true
+    },
+    "extends": [
+        "airbnb-base"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 13,
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-undef": "warn",
+        "no-return-assign": "warn",
+        "class-methods-use-this": "warn",
+        "consistent-return": "warn",
+        "no-param-reassign": "warn",
+        "no-console": "off",
+        "array-callback-return": "warn",
+        "no-await-in-loop": "off",
+        "no-restricted-syntax": "off",
+        "max-len": [1, 180, 4]
+    }
+}
