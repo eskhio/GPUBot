@@ -1,0 +1,377 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Baloo+2">
+    <style>
+        body {
+            font-family: "Baloo 2";
+            background: #292929;
+            color: white;
+            font-size: 14px;
+            overflow-x: hidden;
+        }
+
+        code {
+            padding: 5px;
+            border-radius: 2px;
+            border-left: 1px solid beige;
+            background-color: #111010;
+            color: rgb(0, 173, 226);
+        }
+
+        .container {
+            font-family: "Baloo 2";
+            display: grid;
+            grid-template-columns: 1.4fr 0.6fr;
+            grid-template-rows: 1fr;
+            gap: 0px 0px;
+            grid-auto-flow: column;
+            grid-template-areas:
+                "general-idea use";
+            text-align: center;
+        }
+
+        .general-idea {
+            height: 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 0px 0px;
+            grid-auto-flow: row;
+            grid-template-areas:
+                "."
+                "prerequisites"
+                "handled";
+            grid-area: general-idea;
+            border: 2px solid #2b2b2b;
+        }
+
+        .handled {
+            border: 2px solid #2b2b2b;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+            gap: 0px 0px;
+            grid-auto-flow: row;
+            grid-template-areas:
+                ". .";
+            grid-area: handled;
+        }
+
+        .prerequisites {
+            grid-area: prerequisites;
+            border: 2px solid #2b2b2b;
+        }
+
+        .usage {
+            grid-area: use;
+            border: 2px solid #2b2b2b;
+            padding: 10px;
+        }
+
+        .handled div {
+            border: 2px solid #2b2b2b;
+        }
+
+        p {
+            text-align: center;
+            padding: 0;
+        }
+
+        img {
+            padding: 0;
+        }
+
+        table {
+            font-size: 14px;
+        }
+
+        .tg {
+            width: 100%;
+            text-align: center;
+            border-collapse: collapse;
+            border-color: #ccc;
+            border-spacing: 0;
+        }
+
+        .tg td {
+            background-color: rgb(48, 48, 48);
+            border-color: #ccc;
+            border-style: solid;
+            border-width: 1px;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            padding: 10px 5px;
+            word-break: normal;
+            font-weight: bolder;
+        }
+
+        .tg th {
+            background-color: #f0f0f0;
+            border-color: #ccc;
+            border-style: solid;
+            border-width: 1px;
+            color: rgb(0, 173, 226);
+            font-weight: normal;
+            overflow: hidden;
+            padding: 10px 5px;
+            word-break: normal;
+            font-weight: bolder;
+        }
+
+        .tg .tg-c3ow {
+            border-color: inherit;
+            text-align: center;
+            vertical-align: top
+        }
+
+        .tg .tg-0pky {
+            border-color: inherit;
+            text-align: left;
+            vertical-align: top
+        }
+
+        h1 {
+            border-bottom: 2px solid #2b2b2b;
+            text-align: left;
+        }
+
+        h2,
+        h1 {
+            color: rgb(255, 255, 255);
+            text-transform: none;
+            text-align: center;
+        }
+
+        h1 {
+            text-align: left;
+        }
+
+        .marker {
+            margin: 0 10px 0 10px;
+            color: rgb(0, 173, 226);
+        }
+
+        ol {
+            counter-reset: orderedlist;
+            list-style-position: inside;
+            padding: 0;
+        }
+        .legend{
+            height: 200px;
+        }
+        ol li {
+            text-align: left;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            font-size: 14px;
+            line-height: 2.4em;
+        }
+
+        a:visited {
+            color: rgb(179, 255, 0)
+        }
+
+        a:not(:visited) {
+            color: rgb(99, 141, 0)
+        }
+
+        .accordion {
+
+            cursor: pointer;
+        }
+        .panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background: rgb(43, 43, 43);
+        }
+
+        h2.accordion:hover {
+            rotate: 45deg;
+            transition: rotate 1s;
+            animation-duration: 2sec;
+        }
+        #footer {
+            text-align: center; 
+            bottom: 0; 
+            width: 100%
+        }
+        #footer ul {
+            list-style-type: none;
+        }
+        #footer li {
+            float: left;
+            margin-left: 20px;
+        }
+        #footer li a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GPUB🤖t</h1>
+    <div class="container">
+        <div class="general-idea">
+            <div>
+                <h2 class="accordion"><span class='marker'>#</span>General idea<span class='marker'>#</span></h2>
+                <p>
+                    A 🤖 designed to ease the buy of a GPU.
+                </p>
+                <p>
+                    Launch it and forget about it until it opens a Chrome Window, coming with a fresh GPU in a cart!
+                </p>
+                <p>
+                    It relies on a Discord server in order to monitor the newest available GPUs, sold by some French
+                    marketplaces.
+                </p>
+                <div class="prerequisites">
+                    <div>
+                        <h2 class="accordion"><span class='marker'>#</span>Prerequisites<span class='marker'>#</span>
+                        </h2>
+                        <img src="req.png" />
+                        <ul>
+                            <li>+ every desired GPU's channel within Bavanarnold's Discord Server joined</li>
+                            <img style="height: 120px;" src="bavar.png"/>
+                        </ul>
+                    </div>
+                </div>
+                <div class="handled">
+                    <div>
+                        <h2 class="accordion"><span class='marker'>#</span>Handled marketplaces<span
+                                class='marker'>#</span></h2>
+                        <ul>
+                            <li>Rue du commerce </li>
+                            <li>CDiscount</li>
+                            <li>TopAchat</li>
+                            <li>GrosBill </li>
+                            <li>LDLC</li>
+                            <li>Cybertek</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="accordion"><span class='marker'>#</span>Handled GPUs<span class='marker'>#</span>
+                        </h2>
+                        <table class="tg">
+                            <thead>
+                                <tr>
+                                    <th class="tg-o7ju">GPU</th>
+                                    <th class="tg-o7ju">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="tg-rqai">3060</td>
+                                    <td class="tg-rqai">/</td>
+                                </tr>
+                                <tr>
+                                    <td class="tg-rqai">3060ti</td>
+                                    <td class="tg-rqai">439e</td>
+                                </tr>
+                                <tr>
+                                    <td class="tg-rqai">3070</td>
+                                    <td class="tg-rqai">549e</td>
+                                </tr>
+                                <tr>
+                                    <td class="tg-rqai">3070ti</td>
+                                    <td class="tg-rqai">649e</td>
+                                </tr>
+                                <tr>
+                                    <td class="tg-rqai">3080</td>
+                                    <td class="tg-rqai">759e</td>
+                                </tr>
+                                <tr>
+                                    <td class="tg-rqai">3080ti</td>
+                                    <td class="tg-rqai">1269e</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: center; bottom: 0; width: 100%" id="footer">
+                <ul><li><a href="https://github.com/eskhio/GPUBot/">#Github</a></li><li><a href='https://store.nvidia.com/fr-fr/geforce/store/gpu/?page=1&limit=9&locale=fr-fr&category=GPU&gpu=RTX%203090,RTX%203080%20Ti,RTX%203080,RTX%203070%20Ti,RTX%203070,RTX%203060%20Ti,RTX%203060&gpu_filter=RTX%203090%20Ti~5,RTX%203090~19,RTX%203080%20Ti~23,RTX%203080~27,RTX%203070%20Ti~21,RTX%203070~20,RTX%203060%20Ti~21,RTX%203060~24,RTX%203050%20Ti~0,RTX%203050~2,RTX%202080%20SUPER~0,RTX%202080~0,RTX%202070%20SUPER~0,RTX%202070~0,RTX%202060%20SUPER~1,RTX%202060~5,GTX%201660%20Ti~3,GTX%201660%20SUPER~12,GTX%201660~5,GTX%201650%20Ti~0,GTX%201650%20SUPER~1,GTX%201650~21'>#Nvidia</a></li></ul>
+            </div>
+        </div>
+        <div class="usage">
+            <h2 class="accordion"><span class='marker'>#</span>Get<span class='marker'>#</span></h2>
+            <div class="panel">
+                <table class="tg">
+                    <tbody>
+                      <tr>
+                        <td class="tg-c3ow">Windows</td>
+                        <td class="tg-ezbu"><a href="https://github.com/eskhio/GPUBot/releases/latest/download/bot.exe">.exe</a></td>
+                      </tr>
+                      <tr>
+                        <td class="tg-c3ow">npm</td>
+                        <td class="tg-ezbu"><code>npm i @eskh/gpubot</code><br></td>
+                      </tr>
+                    </tbody>
+                    </table>
+            </div>
+            <h2 class="accordion"><span class='marker'>#</span>Use<span class='marker'>#</span></h2>
+            <div class="panel">
+                <ol>
+                    <li>Select which model you're interested in
+                        <br /><img class="legend" src='pick.gif' />
+                    </li>
+                    <li>
+                        Provide your Discord login
+                        <br /><img class="legend" src='login.gif' />
+                    </li>
+                    <li>
+                        Wait for it
+                        <br /><img class="legend" src='waiting.gif' />
+                    </li>
+
+                </ol>
+            </div>
+            <h2 class="accordion"><span class='marker'>#</span>Test<span class='marker'>#</span></h2>
+            <div class="panel">
+                <ol>
+                    <li>Join this test <a href="https://discord.gg/fPukDbZp3t">Discord channel</a></li>
+                    <li>Run the bot & select the <code>test</code> option when asked
+                        <br /><img class="legend" src='testserv.gif' />
+                    </li>
+                    <li>Send the message <code>ping</code> within <code>#gpubot</code> -> a GPU should be posted and the
+                        bot should open a Chrome window
+                        <br /><img class="legend" src='testping.png' />
+                    </li>
+
+                </ol>
+            </div>
+            <h2 class="accordion"><span class='marker'>#</span>Build<span class='marker'>#</span></h2>
+            <div class="panel">
+                <ul style="text-align: left">
+                    <li><code>git clone https://github.com/eskhio/GPUBot</code></li>
+                    <li><code>npm i --save-dev</code></li>
+                    <li><code>pkg . --target node17-win-x64 --out-path ./build/exe --compress GZip</code></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    for (acc of Array.from(document.querySelectorAll(".accordion"))) {
+        acc.addEventListener("click", function () {
+            this.classList.toggle("active");
+            let panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        });
+    }
+</script>
