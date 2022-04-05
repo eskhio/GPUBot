@@ -3,50 +3,45 @@
 /* eslint-disable no-multi-assign */
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const conf = require('../conf');
 const GPUEvents = require('../events/GPUEvents');
 
 puppeteer.use(StealthPlugin());
 const bavar = module.exports = {
-  process: async (gpu) => bavar.getGPURealData(gpu).catch((e) => { console.log(e); throw e; }),
-  openGPU: async (page, openGPUSelector) => {
-    await page.click(`.${openGPUSelector}`);
+  process: async (bot) => bavar.getGPURealData(bot).catch((e) => {
+    console.log(e);
+    throw e;
+  }),
+  openGPU: async (bot, openGPUSelector) => {
+    await bot.page.click(`.${openGPUSelector}`);
   },
-  getRealURL: async (page) => {
-    if (/bavar/.test(page.url())) {
-      await bavar.openGPU(page, (await bavar.parseGoToGPUButton(page)).class);
-      await page.waitForFunction(
-        (vendorRegex) => new RegExp(vendorRegex).test(location.href),
+  getRealURL: async (bot) => {
+    if (/bavar/.test(bot.page.url())) {
+      await bavar.openGPU(bot, (await bavar.parseVendorButton(bot)).class);
+      await bot.page.waitForFunction(
+        (regex) => new RegExp(regex).test(location.href),
         {},
-        conf.vendorRegex,
+        bot.globalConfig.vendorRegex,
       );
     }
-    return page.url();
+    return bot.page.url();
   },
-  open: async (page, url) => page.goto(url, { waitUntil: 'networkidle0' }),
-  getGPURealData: async (gpu) => {
-    const pageInstance = await gpu.bot.page;
-
-    await bavar.open(pageInstance, gpu.url);
-    new GPUEvents().emit('gpuWaitingForVendor', gpu);
+  open: async (bot) => bot.page.goto(bot.gpu.url, {
+    waitUntil: 'networkidle0',
+  }),
+  getGPURealData: async (bot) => {
+    await bavar.open(bot);
+    new GPUEvents().emit('gpuWaitingForVendor', bot.gpu);
     const realData = {
-      vendor: await bavar.getRealVendor(pageInstance),
-      url: await bavar.getRealURL(pageInstance),
+      vendor: await bavar.getRealVendor(bot),
+      url: await bavar.getRealURL(bot),
     };
-    new GPUEvents().emit('gpuGotVendor', gpu);
+    new GPUEvents().emit('gpuGotVendor', bot.gpu);
     return realData;
   },
-  getRealVendor: async (page) => {
-    const vendorUrl = /bavar/.test(page.url())
-      ? (await bavar.getVendorButton(page)).innerText
-      : page.url();
-    return bavar.parseVendor(vendorUrl);
-  },
-  getVendorButton: async (page) => {
-    const res = await bavar.parseGoToGPUButton(page);
-    return res;
-  },
-  parseGoToGPUButton: async (page) => page.evaluate(() => {
+  getRealVendor: async (bot) => bavar.parseVendor(bot.globalConfig.vendorRegex, await bavar.getRealVendorUrl(bot)),
+  getRealVendorUrl: async (bot) => (/bavar/.test(bot.page.url()) ? (await bavar.getVendorButton(bot)).innerText : bot.page.url()),
+  getVendorButton: async (bot) => bavar.parseVendorButton(bot),
+  parseVendorButton: async (bot) => bot.page.evaluate(() => {
     for (const link of Array.from(document.querySelectorAll('a'))) {
       if (/Acheter sur/.test(link.innerText)) {
         return {
@@ -58,13 +53,8 @@ const bavar = module.exports = {
     }
     throw new Error('Go to GPU button not found');
   }),
-  parseVendor: (text) => {
-    if (/ldlc/i.test(text)) return 'ldlc';
-    if (/rue?\sdu?\scommerce/i.test(text)) return 'rdc';
-    if (/grosb/i.test(text)) return 'gb';
-    if (/cdisco/i.test(text)) return 'cd';
-    if (/top\s?achat/i.test(text)) return 'topachat';
-    if (/cybertek/i.test(text)) return 'cybertek';
-    throw new Error(`Unknown vendor: ${text.match(/Acheter sur (.*)/)[1]}`);
+  parseVendor: (vendorRegex, vendorUrl) => {
+    if (!vendorRegex.test(vendorUrl)) throw new Error(`Unknown vendor: ${vendorUrl.match(/Acheter sur (.*)/)[1]}`);
+    return vendorUrl.match(vendorRegex)[0].toLowerCase().replaceAll('\\s');
   },
 };

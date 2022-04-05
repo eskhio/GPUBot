@@ -1,38 +1,53 @@
-name: Build exe
+name: Build dev bin
 on:
   pull_request:
     branches: [ develop ]
 
 jobs:
-  build:
-
+  setup:
     runs-on: ubuntu-latest
-
     strategy:
-      matrix:
-        node-version: [17.x]
-
+        matrix:
+          node-version: [17.x]
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        cache-dependency-path: package.json
     - run: npm i --production
     - run: rm -rf ./node_modules/puppeteer/.local-chromium
-    - run: npm i pkg -g --save-dev
-    - run: pkg . --target node17-win-x64 --output ./build/exe/bot.exe --compress GZip
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          node-version: [17.x]
+    steps:
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache-dependency-path: package.json
+    - uses: actions/checkout@v3
+    - run: npm i pkg -g
+    - run: ls
+    - run: pkg . --target node17-win-x64 --output ./build/exe/bot-dev.exe --compress GZip
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.0.0
       with:
-        name: bot.exe
+        name: bot-dev.exe
         path: ./build/exe/
         retention-days: 1
     - uses: actions/download-artifact@v3
       id: download
       with:
-        name: 'bot.exe'
+        name: 'bot-dev.exe'
         path: ./build/exe/
 
     - name: Pull request artifacts
@@ -41,4 +56,5 @@ jobs:
       with:
         commit: ${{ github.event.pull_request.head.sha }}
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        artifacts: ./build/exe/bot.exe
+        artifacts: ./build/exe/bot-dev.exe
+        artifacts-branch: develop
