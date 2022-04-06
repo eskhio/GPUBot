@@ -59,22 +59,28 @@ class GPUEvents extends EventEmitter {
       this.emitGPUStatus('Login captcha', gpu);
     });
     this.on('loginFail', (error) => {
-      this.emitGPUStatus('Incorrect login', null, error);
+      this.emitGPUStatus('Discord login fail', null, error);
     });
     this.on('gpuParseFail', (error, gpu) => {
-      this.emitGPUStatus('GPU parse failed', gpu, error);
+      this.emitGPUStatus('GPU parse fail', gpu, error);
     });
     this.on('gpuInitFail', (error, gpu) => {
-      this.emitGPUStatus('GPU init failed', gpu, error);
+      this.emitGPUStatus('GPU init fail', gpu, error);
     });
     this.on('gpuLoadFail', (error, gpu) => {
       this.emitGPUStatus('GPU load fail', gpu, error);
     });
     this.on('gpuCheckStatusFail', (error, gpu) => {
-      this.emitGPUStatus('GPU check status failed', gpu, error);
+      this.emitGPUStatus('GPU check status fail', gpu, error);
+    });
+    this.on('gpuParseStatusFail', (error, gpu) => {
+      this.emitGPUStatus('GPU parse status fail', gpu, error);
     });
     this.on('gpuAddCartFail', (error, gpu) => {
-      this.emitGPUStatus('GPU failed add cart', gpu, error);
+      this.emitGPUStatus('GPU fail add cart', gpu, error);
+    });
+    this.on('gpuHandleStatusFail', (error, gpu) => {
+      this.emitGPUStatus('GPU handle status fail', gpu, error);
     });
   }
 

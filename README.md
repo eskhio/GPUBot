@@ -59,10 +59,10 @@ To check that everything runs fine, you can:
 2. [Launch the bot](#how-to) & select the 'test' option when asked  
 ![testserv](/docs/testserv.gif)  
 3. Type the message **ping** within #gpubot -> a GPU should be posted and the bot should open a Chrome Window and make everything to buy it!  
-4. Relaunch the bot (do not select the 'test' option if you don't want to test anymore)
 ![ping](/docs/testping.png)  
+4. Relaunch the bot (do not select the 'test' option if you don't want to test anymore)
 
 #### Build
 1. Clone
 2.  `npm i --save-dev`
-3.  `pkg . --target node17-win-x64 --out-path ./build/exe --compress GZip`
+3.  `pkg . --target node17-win-x64 --output ./build/exe/bot.exe --compress GZip`
