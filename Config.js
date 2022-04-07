@@ -5,10 +5,12 @@ const {
   Confirm,
   Input,
   Password,
+  Select
 } = require('enquirer');
 require('dotenv').config();
-
+const ora = require('ora');
 const mongoose = require('mongoose');
+const chalk = require('chalk');
 
 class Config {
   constructor() {
@@ -50,36 +52,62 @@ class Config {
         discord: Object,
       },
     });
+    this.Vendors = mongoose.model('vendors', this.vendorsSchema);
+    this.Gpus = mongoose.model('gpus', this.gpusSchema);
+    this.Statuses = mongoose.model('statuses', this.statusesSchema);
+    this.WebSockets = mongoose.model('webSockets', this.webSocketSchema);
+    this.Urls = mongoose.model('urls', this.urlsSchema);
+    this.Browsers = mongoose.model('browsers', this.browsersSchema);
+
+    return this;
   }
 
-  static setAuthorization(provider, token) {
-    this.conf.authorizations[provider] = token;
-  }
-
-  static setWebSocketToken(token) {
-    this.conf.webSockets.discord.payload.d.token = token;
-  }
-
-  static modelPrompt(models) {
+  static async modelPrompt(models) {
     return new MultiSelect({
       name: 'value',
-      message: 'GPU models',
-      limit: 7,
+      prefix: "-",
+      separator: "-",
+      message: 'Wanted models',
       choices: models,
-    });
+    }).run()
+      .then((selectedModels) => {
+        if(selectedModels.length === 0) throw new Error("No choice");
+        return selectedModels;
+    })
   }
 
   static async retryPrompt(error, fnToRetry) {
-    new Confirm({
+    return new Confirm({
       name: 'question',
-      message: `${error}, retry?`,
+      message: `${chalk.red(error)}, retry?`,
     }).run()
       .then(async (answer) => {
-        if (answer) return fnToRetry();
-        throw error;
-      });
+        console.log("\n");
+        if (answer) {
+          return fnToRetry()
+        }
+        throw new Error("Aborting")
+      }).catch((e) => { throw e; });
   }
 
+  static discordSpinner(text){
+    return ora({
+      interval: 60,
+      text: text || 'Discord init',
+      discardStdin: true,
+      spinner: 'dots4',
+    });
+  }
+  static mainSpinner(text){
+    return ora({
+      interval: 60,
+      prefixText: '\n',
+      suffixText: '\n\n',
+      text: text,
+      discardStdin: false,
+      spinner: 'dots4',
+    });
+  }
   static promptMail() {
     return new Input({
       name: 'email',
@@ -94,29 +122,24 @@ class Config {
     });
   }
 
-  async initConfig() {
+  async init() {
     await mongoose.connect('mongodb+srv://GPUBotUser:PZDkP5RGToywSRZt@gpubot.rbd4f.mongodb.net/bot', {
       useNewUrlParser: true,
     });
-    const Vendors = mongoose.model('vendors', this.vendorsSchema);
-    const Gpus = mongoose.model('gpus', this.gpusSchema);
-    const Statuses = mongoose.model('statuses', this.statusesSchema);
-    const WebSockets = mongoose.model('webSockets', this.webSocketSchema);
-    const Urls = mongoose.model('urls', this.urlsSchema);
-    const Browsers = mongoose.model('browsers', this.browsersSchema);
-    const vendors = await Vendors.find({}, {
+
+    const vendors = await this.Vendors.find({}, {
       _id: 0,
     });
-    const urls = await Urls.find({}, {
+    const urls = await this.Urls.find({}, {
       _id: 0,
     });
-    const gpus = await Gpus.find({}, {
+    const gpus = await this.Gpus.find({}, {
       _id: 0,
     });
-    const statuses = await Statuses.find({}, {
+    const statuses = await this.Statuses.find({}, {
       _id: 0,
     });
-    const browsers = await Browsers.find({}, {
+    const browsers = await this.Browsers.find({}, {
       _id: 0,
     });
     this.conf.browsers = browsers;
@@ -149,9 +172,9 @@ class Config {
         this.conf.urls[url.service.name][gpu.model.name] = gpu.model.channelId;
       }
     });
-    this.conf.models = (await (Gpus.find())).map((gpu) => gpu.model.name);
-    this.conf.webSockets = (await (WebSockets.findOne())).webSockets;
-    return this.conf;
+    this.conf.models = (await (this.Gpus.find())).map((gpu) => gpu.model.name);
+    this.conf.webSockets = (await (this.WebSockets.findOne())).webSockets;
+    return this;
   }
 }
 

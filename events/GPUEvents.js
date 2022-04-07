@@ -55,12 +55,6 @@ class GPUEvents extends EventEmitter {
     this.on('gpuOutage', (gpu) => {
       this.emitGPUStatus('GPU outage', gpu);
     });
-    this.on('loginCaptcha', (gpu) => {
-      this.emitGPUStatus('Login captcha', gpu);
-    });
-    this.on('loginFail', (error) => {
-      this.emitGPUStatus('Discord login fail', null, error);
-    });
     this.on('gpuParseFail', (error, gpu) => {
       this.emitGPUStatus('GPU parse fail', gpu, error);
     });

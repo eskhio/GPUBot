@@ -92,7 +92,7 @@ class Bot extends BotEvents {
           .then(() => this.addCart().catch((e) => {
             throw e;
           }));
-      });
+      }).catch((e) => { throw e; });
   }
 
   /**
@@ -189,7 +189,6 @@ class Bot extends BotEvents {
     ])
       .catch(async (e) => {
         new GPUEvents().emit('gpuAddCartFail', e, this.gpu);
-        await this.page.close();
         throw e;
       })
       .then(() => {

@@ -1,104 +1,113 @@
 #!/usr/bin/env node
 
 /* eslint-disable no-undef */
-const ora = require('ora');
 const fs = require('fs');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const GPU = require('./gpu/gpu');
 const Config = require('./Config');
 const Discord = require('./discord/discord');
-const BotError = require('./errors/BotError');
 const Bot = require('./gpu/bot');
+const {
+  EventEmitter
+} = require('stream');
+const chalk = require('chalk');
 
 puppeteer.use(StealthPlugin());
-let browserInstance;
 
-/**
- * @description Init a GPU browser+page
- * @param {Object} config A config
- */
-async function initBrowser(config) {
-  try {
-    if (!browserInstance) {
-      for (const browser of config.browsers) {
+class Main extends EventEmitter {
+
+  constructor(configInstance) {
+    super();
+    this.configInstance = configInstance;
+    this.config = configInstance.conf;
+    this.mainSpinner = Config.mainSpinner('Waiting for new GPUs');
+    this.discordInstance = new Discord(this.config);
+    this.discordInstance.on('gpuDiscordFetched', async (data) => {
+      return this.handleGPU(data, this.config)
+      .then(() => {
+        setTimeout(async () => this.mainSpinner.start(), 4000);
+      });
+    });
+    return this;
+  }
+  /**
+   * @description Init selected models, Discord and browser instance
+   * @returns {Promise} Wait for a models, disord and browser to be init
+   */
+  async init() {
+    this.mainSpinner.stop();
+    return this.initSelectedModels()
+      .then(() => {
+        return this.initDiscord(this.selectedModels)
+          .catch((e) => {
+            throw e;
+          })
+      })
+      .then(() => this.initBrowser().catch((e) => { 
+        this.mainSpinner.fail(chalk.red(`Check your chrome installation. Checked into:\n`));
+        this.config.browsers.map((b) => console.log(chalk.red(`- ${b.path}`)));
+          throw e; 
+      }));
+  }
+
+  /**
+   * @description Main routine: init a bot and try to process a GPU
+   * @param {Object} rawGPU The raw GPU from Discord
+   * @param {Object} config The global config
+   * @returns {Promise} GPU has been processed
+   */
+  async handleGPU(rawGPU, config) {
+    try {
+      this.mainSpinner.info("New GPU");
+      const bot = await (new Bot(config))
+        .init(new GPU(rawGPU), this.browserInstance);
+      await bot.process(config)
+        .catch((e) => { })
+    } catch (e) { }
+  }
+  /**
+   * @description Init a browser
+   */
+  async initBrowser() {
+    try {
+      for (const browser of this.config.browsers) {
         if (fs.existsSync(browser.path)) {
-          browserInstance = await puppeteer.launch({
+          this.browserInstance = await puppeteer.launch({
             executablePath: browser.path,
             headless: false,
           });
           break;
         }
       }
-      if (!browserInstance) {
-        throw new DiscordError('No Chrome detected');
+      if (!this.browserInstance) {
+        throw new Error('No Chrome detected');
       }
-      browserInstance.on('disconnected', () => {
-        browserInstance = null;
-      });
-    }
-  } catch (e) {
-    console.log(e);
-    throw new BotError('Browser init failed', e);
+    } catch(e) { throw e; }
+  }
+  /**
+   * @description Init the Discord web socket
+   * @param {Array} selectedModels The selected GPU models
+   * @returns {Promise} Wait for the web socket to be init
+   */
+  async initDiscord(selectedModels) {
+    return this.discordInstance.init(selectedModels)
+      .catch((e) => {
+        throw e;
+      })
+      .then(() =>  this.mainSpinner.start())
+  }
+  /**
+   * @description Init the selected GPUs models
+   */
+  async initSelectedModels() {
+    this.selectedModels = await Config.modelPrompt(this.config.models);
   }
 }
-
-const spinner = ora({
-  interval: 60,
-  prefixText: '\n',
-  text: 'Waiting for new GPUs..',
-  discardStdin: false,
-  spinner: 'dots4',
-});
-
-/**
- * @description Main routine: go to the GPU's URL and try to add it to cart
- * @returns {Promise} Wait for a GPU to be fully loaded+tagged
- */
-async function handleGPU(rawGPU, config) {
-  try {
-    await initBrowser(config);
-    spinner.stop();
-
-    const bot = await (new Bot(config))
-      .init(new GPU(rawGPU), browserInstance);
-    bot.process(config)
-      .catch((e) => {})
-      .finally(() => {
-        setTimeout(() => spinner.start(), 4000);
-      });
-  } catch (e) {}
-}
-/**
- * @description Init the Discord web socket
- * @returns {Promise} Wait for the web socket to be init
- */
-async function initDiscord(selectedModels, config) {
-  await (new Discord(selectedModels, handleGPU, config))
+(async () => {
+  new Main(await (new Config()).init())
     .init()
     .catch((e) => {
       process.exit(-1);
-    });
-}
-/**
- * @description Init the config object
- * @returns {Promise} Wait for the config to be init
- */
-async function initConfig() {
-  return (new Config())
-    .initConfig()
-    .catch((e) => {
-      process.exit(-1);
-    });
-}
-
-(async () => {
-  try {
-    const config = await initConfig();
-    const selectedModels = await Config.modelPrompt(config.models).run();
-    await initDiscord(selectedModels, config);
-    spinner.start();
-  } catch (e) {
-    process.exit(-1);
-  }
+    })
 })();

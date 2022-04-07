@@ -36,30 +36,30 @@ It relies on a Discord server in order to monitor the newest available GPUs, sol
 |3080ti|1269e|
 
 ### Prerequisites
-✅ Windows  
-✅ Chrome installed within a 'classic' path 
-✅ Subscribe to every desired GPUs channel within Bavarnold Discord server
+> ✅ Chrome installed within a 'classic' path  
+✅ Subscribe to every desired GPUs channel within [Bavarnold Discord server](https://discord.com/invite/bavarnold)  
+![](https://github.com/eskhio/GPUBot/blob/main/docs/bavar.png)
 
 # How to
 ### Get
-Use the latest [latest bin](https://github.com/eskhio/GPUBot/releases/latest/download/bot.exe) or `npm i @eskh/gpubot`
+Use the latest [latest bin](https://github.com/eskhio/GPUBot/releases/latest/download/bot.exe) or `npm i @eskh/gpubot -g && gpubot`
 
 ### Use
-1. Run it
+1. Run it (`$ gpubot`)
 2. Select which model you're interested in (**Space Key** to select, **Enter Key** to validate selection)  
-![pick](/docs/pick.gif)  
+![pick](https://github.com/eskhio/GPUBot/blob/main/docs/pick.gif)  
 3. Provide your Discord login  
-![login](/docs/login.gif)  
+![login](https://github.com/eskhio/GPUBot/blob/main/docs/login.gif)  
 4. Wait for it!  
-![waiting](/docs/waiting.gif) 
+![waiting](https://github.com/eskhio/GPUBot/blob/main/docs/waiting.gif) 
 
 #### Test
 To check that everything runs fine, you can:
 1. Join this test [Discord channel](https://discord.gg/fPukDbZp3t)
 2. [Launch the bot](#how-to) & select the 'test' option when asked  
-![testserv](/docs/testserv.gif)  
+![testserv](https://github.com/eskhio/GPUBot/blob/main/docs/testserv.gif)  
 3. Type the message **ping** within #gpubot -> a GPU should be posted and the bot should open a Chrome Window and make everything to buy it!  
-![ping](/docs/testping.png)  
+![ping](https://github.com/eskhio/GPUBot/blob/main/docs/testping.png)  
 4. Relaunch the bot (do not select the 'test' option if you don't want to test anymore)
 
 #### Build

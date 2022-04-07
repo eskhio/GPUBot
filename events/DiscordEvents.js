@@ -1,51 +1,45 @@
 const EventEmitter = require('events');
 const moment = require('moment');
 const chalk = require('chalk');
-const Config = require('../Config');
+const GPUEvents = require('./GPUEvents');
 
-class GPUEvents extends EventEmitter {
+class DiscordEvents extends EventEmitter {
   constructor() {
     super();
+    this.on('discordBrowserOpened', () => {
+      // this.emitDiscordStatus('Discord browser opened', null);
+    });
+    this.on('discordBrowserOpenFail', (error) => {
+      // this.emitDiscordStatus('Discord browser open failed', error);
+    });
     this.on('gpuDiscordFetched', (gpu) => {
-      this.emitDiscordStatus('GPU discord fetched', gpu);
+      // this.emitDiscordStatus('GPU fetched', gpu);
     });
-    this.on('tokenFetched', (token) => {
-      console.log(
-        chalk.hex('#6B8E23')(JSON.stringify({ status: 'Token fetched', date: new moment().format('HH:mm:ss'), token }, null, 4)),
-      );
-      Config.setAuthorization('discord', token);
-      Config.setWebSocketToken(token);
-    });
-    this.on('tokenFetchFail', (error) => {
-      this.emitDiscordStatus('Incorrect login', null, error);
+    this.on('tokenFetched', () => {
+      // this.emitDiscordStatus('Discord token fetched');
     });
     this.on('tokenCaptcha', (error) => {
-      this.emitDiscordStatus('Token captcha', null, error);
+      this.emitDiscordStatus('Token captcha', error);
+    });
+    this.on('loginCaptcha', (error) => {
+      this.emitDiscordStatus('Login captcha', error);
+    });
+    this.on('loginFail', (error) => {
+      // this.emitDiscordStatus('Discord login fail', error);
     });
   }
 
-  emitDiscordStatus(status, gpu, error) {
+  emitDiscordStatus(status, error) {
     let color;
-    let gputoJSON;
-    if (gpu) {
-      gputoJSON = {
-        id: gpu?.id,
-        price: gpu?.price,
-        vendor: gpu?.vendor,
-        url: gpu?.url,
-        status,
-        date: new moment().format('HH:mm:ss'),
-      };
-      color = gpu.color;
-    }
+    let discordtoJSON = {};
+    discordtoJSON.status = status;
     if (error) {
-      gputoJSON = { ...gputoJSON, error: { ...error, stack: error.stack } };
+      discordtoJSON = { ...discordtoJSON, error: { ...error, stack: error.stack } };
       color = '#C70039';
     }
-
     console.log(
-      chalk.hex(color || '#FFFFF')(JSON.stringify(gputoJSON, null, 4)),
+      chalk.hex(color || '#FFFFF')(JSON.stringify(discordtoJSON, null, 4)),
     );
   }
 }
-module.exports = GPUEvents;
+module.exports = DiscordEvents;

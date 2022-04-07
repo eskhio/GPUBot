@@ -1,70 +1,75 @@
 require('dotenv').config();
 
 /* eslint-disable max-classes-per-file */
-const ora = require('ora');
 const WebSocket = require('ws');
 
 const puppeteer = require('puppeteer-extra');
 const fs = require('fs');
 const Config = require('../Config');
-const DiscordEvents = require('../events/GPUEvents');
+const DiscordEvents = require('../events/DiscordEvents');
 const DiscordError = require('../errors/DiscordError');
 puppeteer.use(require('puppeteer-extra-plugin-stealth')());
-
+const chalk = require('chalk');
 /**
  * A GPU
  * @class Backup
  */
 class Discord extends DiscordEvents {
-  constructor(selectedModels, handleGPU, config) {
+  constructor(config) {
     super();
-    this.selectedModelsID = selectedModels.map((selectedModel) => config.urls.discord[selectedModel]);
-    this.spinner = ora({
-      interval: 1,
-      prefixText: '\n',
-      text: 'Fetching token',
-      discardStdin: false,
-    });
     this.config = config;
-    this.on('gpuDiscordFetched', (data) => {
-      this.spinner.stop();
-      handleGPU(data, this.config);
-    });
+    this.spinner = Config.discordSpinner("Discord init");
   }
 
   /**
    * @description Init a Discord socket
    * @returns {Promise} A token + a socket
    */
-  async init() {
+  async init(selectedModels) {
+    console.log("\n");
     this.spinner.start();
-    return this.initToken()
-      .catch((e) => {
-        throw e;
-      })
-      .then(async () => {
-        this.spinner.color = 'yellow';
-        this.spinner.text = 'Opening discord websocket..';
-        await this.initSocket();
+    this.selectedModels = selectedModels;
+    this.selectedModelsID = this.selectedModels.map((selectedModel) => this.config.urls.discord[selectedModel]);
+    if(process.env.DTOKEN || this.token) {
+      this.token = process.env.DTOKEN || this.token;
+      this.config.webSockets.discord.payload.d.token = this.token;
+    } else {
+      await this.initBrowser().catch((e) => { 
+        this.spinner.fail(chalk.red(`Check your chrome installation. Checked into:\n`));
+        this.config.browsers.map((b) => console.log(chalk.red(`- ${b.path}`)));
+        throw e; 
       });
+      await this.initToken()
+        .catch((e) => {
+          throw e;
+        })
+    }
+    this.spinner.start();
+    this.spinner.color = 'yellow';
+    this.spinner.text = 'Opening Discord websocket..';
+    return this.initSocket();
   }
 
   /**
-   * @description Init a browser
+   * @description Init a browser instance
+   * @returns {Object} A browser instance
    */
   async initBrowser() {
-    for (const browser of this.config.browsers) {
-      if (fs.existsSync(browser.path)) {
-        this.browser = await puppeteer.launch({
-          executablePath: browser.path,
-          headless: true,
-        });
-        break;
+    try {
+      for (const browser of this.config.browsers) {
+        if (fs.existsSync(browser.path)) {
+          this.browser = await puppeteer.launch({
+            executablePath: browser.path,
+          });
+          this.emit("discordBrowserOpened");
+          break;
+        }
       }
-    }
-    if (!this.browser) {
-      this.spinner.stop();
-      throw new DiscordError('No Chrome detected');
+      if (!this.browser) {
+        throw new DiscordError('No Chrome detected');
+      }
+    } catch (e) {
+      throw e;
     }
   }
 
@@ -76,40 +81,49 @@ class Discord extends DiscordEvents {
       this.token = process.env.DTOKEN;
       return true;
     }
-    await this.initBrowser();
-    await this.spinner.stop();
-    return this.fetchToken()
-      .catch((e) => {
-        throw e;
-      });
+    return this.login().catch((e) => { throw e; });
   }
 
   /**
-   * @description Fetch a Discord's token
-   * @returns {Promise} Logged in
+   * @description Discord login
+   * @returns {Promise} Logged in (or not)
    */
-  async fetchToken() {
-    return this.login()
-      .catch((e) => {
-        throw e;
-      });
+  async login() {
+    try {
+      let credentials;
+      if(this.token) return true;
+      else if (process.env.DLOGIN && process.env.DPWD) credentials = { email: process.env.DLOGIN, pwd: process.env.DPWD };
+      else credentials = await this.askForCredentials()
+        .catch((e) => {
+          throw e;
+        });
+      this.spinner.start();
+      await this.openLoginPage();
+      await this.fillAndSubmitLogin(credentials);
+      return this.parseLoginResult()
+        .catch((e) => {
+          throw e;
+        });
+    } catch (e) {
+      this.spinner.stop();
+      this.emit('loginFail', e);
+      return Config.retryPrompt(e, () => this.login())
+    }
   }
 
   /**
    * @description Init a Discord socket
-   * @returns {Promise} A Discord socket
+   * @returns {Promise} A Discord socket opened
    */
   async initSocket() {
-    this.config.webSockets.discord.payload.d.token = this.token;
-    return new Promise((resolve) => {
+    this.spinner.succeed("Discord websocket opened");
+    if(!this.ws) {
       this.ws = new WebSocket('wss://gateway.discord.gg/?v=9&encoding=json');
       this.ws.on('message', (data) => this.receive(data));
       this.ws.on('open', () => this.ws.send(JSON.stringify(this.config.webSockets.discord.payload)));
-      if (this.browser) this.browser.close();
-      this.spinner.text = 'Websocket opened..';
-      this.spinner.stop();
-      resolve();
-    });
+      if(this.browser) await this.browser.close();
+    }
+    return true;
   }
 
   /**
@@ -117,9 +131,8 @@ class Discord extends DiscordEvents {
    * @returns {Object} email+pwd
    */
   async askForCredentials() {
-    console.log('-----------');
-    console.log('Discord login');
-    console.log('-----------');
+    this.spinner.info("Login")
+    console.log('--------------');
     let email;
     let pwd;
     try {
@@ -156,18 +169,21 @@ class Discord extends DiscordEvents {
 
   /**
    * @description Open Discord's login page
-   * @returns {Promise} A Discord login page opened
+   * @returns {Promise} A Discord login page opened + a listener for web socket activity opened
    */
   async openLoginPage() {
     this.spinner.text = 'Loading Discord login...';
     this.loginPage = await this.browser.newPage();
-    // eslint-disable-next-line no-underscore-dangle
     this.loginPage._client.on('Network.webSocketFrameSent', ({
       response,
     }) => {
-      if (this.parseLoginToken(response)) {
-        this.token = this.parseLoginToken(response);
+      let parsedResponse = this.parseLoginToken(response)
+      if (parsedResponse) {
+        this.token = parsedResponse;
+        this.config.webSockets.discord.payload.d.token = this.token;
         this.emit('tokenFetched', this.token);
+        this.spinner.succeed("Token fetched");
+        this.spinner.start("Opening socket (takes some time)..");
       }
     });
     return this.loginPage.goto('https://discord.com/login', {
@@ -184,12 +200,12 @@ class Discord extends DiscordEvents {
     email,
     pwd,
   }) {
+    this.spinner.start();
     return Promise.all([
       this.loginPage.waitForSelector('input[name="email"]'),
       this.loginPage.waitForSelector('input[name="password"]'),
       this.loginPage.waitForSelector('button[type=submit]'),
     ]).then(async () => {
-      this.spinner.start();
       this.spinner.text = 'Filling form..';
       const emailField = await this.loginPage.$('input[name="email"]');
       const pwdField = await this.loginPage.$('input[name="password"]');
@@ -204,54 +220,37 @@ class Discord extends DiscordEvents {
       throw new DiscordError('Filling login form failed', e);
     });
   }
+    /**
+   * @description Wait for the tokenFetched event to be fired
+   * @returns {Promise} The tokenFetched event has been fired
+   */
+  isLoggedIn(){
+    return new Promise((resolve) => this.once('tokenFetched', resolve));
+  }
 
   /**
    * @description Parse a Discord's login result
-   * @returns {Promise} Login response
+   * @returns {Promise} Login result parsed
    */
   async parseLoginResult() {
     this.spinner.text = 'Checking login result..';
     return Promise.race([
-      this.loginPage.waitForSelector('[class*=errorMessage]'),
-      this.loginPage.waitForSelector('[data-hcaptcha-response]'),
-      new Promise((r) => {
-        setTimeout(r, 10000);
-      }),
-    ])
+        this.isLoggedIn().then(() => new Promise(resolve => setTimeout(resolve, 10000))),
+        this.loginPage.waitForSelector('[class*=errorMessage]'),
+        this.loginPage.waitForSelector('[data-hcaptcha-response]')
+      ])
       .then(async () => {
         if (await this.loginPage.$('[class*=errorMessage]')) {
           throw new DiscordError('Incorrect login');
-        }
-        if (await this.loginPage.$('[data-hcaptcha-response]')) {
+        } else if (await this.loginPage.$('[data-hcaptcha-response]')) {
           throw new DiscordError('Captcha login');
         }
-        this.spinner.text = 'Logged in!';
+        this.spinner.succeed("Logged in");
       })
-      .catch((e) => {
-        throw e;
+      .catch(async (e) => {
+        this.spinner.fail();
+        return Config.retryPrompt(e, () => this.login());
       });
-  }
-
-  /**
-   * @description Discord login
-   */
-  async login() {
-    let credentials;
-    try {
-      credentials = await this.askForCredentials();
-      this.spinner.color = 'yellow';
-      await this.openLoginPage();
-      await this.fillAndSubmitLogin(credentials);
-      return this.parseLoginResult().catch((e) => {
-        throw e;
-      });
-    } catch (e) {
-      this.emit('loginFail', e);
-      this.spinner.stop();
-      return Config.retryPrompt(e, async () => this.init().catch(() => {
-        throw e;
-      }));
-    }
   }
 
   /**
@@ -259,7 +258,7 @@ class Discord extends DiscordEvents {
    * @param {int} ms
    */
   keepAlive(ms) {
-    return setInterval(() => {
+    setInterval(() => {
       this.ws.send(JSON.stringify({
         op: 1,
         d: null,
