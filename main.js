@@ -12,7 +12,7 @@ const {
   EventEmitter
 } = require('stream');
 const chalk = require('chalk');
-
+const path = require('path');
 puppeteer.use(StealthPlugin());
 
 class Main extends EventEmitter {
@@ -23,6 +23,7 @@ class Main extends EventEmitter {
     this.config = configInstance.conf;
     this.mainSpinner = Config.mainSpinner('Waiting for new GPUs');
     this.discordInstance = new Discord(this.config);
+    process.stdout.on('log', () => this.mainSpinner.stop());
     this.discordInstance.on('gpuDiscordFetched', async (data) => {
       return this.handleGPU(data, this.config)
       .then(() => {
@@ -77,6 +78,8 @@ class Main extends EventEmitter {
             executablePath: browser.path,
             headless: false,
           });
+          this.browserInstance.on('disconnected', () => { throw new Error("Browser has been closed"); });
+          await this.minimizeBrowser(await this.loadLandingPage());
           break;
         }
       }
@@ -84,6 +87,26 @@ class Main extends EventEmitter {
         throw new Error('No Chrome detected');
       }
     } catch(e) { throw e; }
+  }
+
+  /**
+   * @description Load the browser's landing page
+   * @returns {Promise} The browser's landing page
+   */
+  async loadLandingPage(){
+    let landingPage = (await this.browserInstance.pages())[0];
+    await landingPage.goto(`file:${path.join(__dirname, 'landing.html')}`);
+    return landingPage;
+  }
+
+   /**
+   * @description Minimize the opened browser
+   * @param {Page} landingPage The browser's landing page
+   */
+  async minimizeBrowser(landingPage){
+    const session = await landingPage.target().createCDPSession();
+    const {windowId} = await session.send('Browser.getWindowForTarget');
+    await session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}});
   }
   /**
    * @description Init the Discord web socket
