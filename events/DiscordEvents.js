@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const EventEmitter = require('events');
 const moment = require('moment');
 const chalk = require('chalk');
