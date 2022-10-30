@@ -60,6 +60,7 @@ class Discord extends DiscordEvents {
         if (fs.existsSync(browser.path)) {
           this.browser = await puppeteer.launch({
             executablePath: browser.path,
+            headless: false,
           });
           this.emit("discordBrowserOpened");
           break;
@@ -93,13 +94,8 @@ class Discord extends DiscordEvents {
       let credentials;
       if(this.token) return true;
       else if (process.env.DLOGIN && process.env.DPWD) credentials = { email: process.env.DLOGIN, pwd: process.env.DPWD };
-      else credentials = await this.askForCredentials()
-        .catch((e) => {
-          throw e;
-        });
       this.spinner.start();
       await this.openLoginPage();
-      await this.fillAndSubmitLogin(credentials);
       return this.parseLoginResult()
         .catch((e) => {
           throw e;
@@ -124,31 +120,6 @@ class Discord extends DiscordEvents {
       if(this.browser) await this.browser.close();
     }
     return true;
-  }
-
-  /**
-   * @description Ask for Discord's credentials
-   * @returns {Object} email+pwd
-   */
-  async askForCredentials() {
-    this.spinner.info("Login")
-    console.log('--------------');
-    let email;
-    let pwd;
-    try {
-      email = await Config.promptMail().run();
-      pwd = await Config.promptPass().run();
-    } catch (e) {
-      console.log(e);
-    }
-    console.log('-----------');
-    if (email && pwd) {
-      return {
-        email,
-        pwd,
-      };
-    }
-    throw new DiscordError('Both fields are mandatory');
   }
 
   /**
@@ -191,35 +162,6 @@ class Discord extends DiscordEvents {
     });
   }
 
-  /**
-   * @description Fill and submit Discord's login form
-   * @param {Object} email+pwd
-   * @returns {Promise} Login form submitted
-   */
-  async fillAndSubmitLogin({
-    email,
-    pwd,
-  }) {
-    this.spinner.start();
-    return Promise.all([
-      this.loginPage.waitForSelector('input[name="email"]'),
-      this.loginPage.waitForSelector('input[name="password"]'),
-      this.loginPage.waitForSelector('button[type=submit]'),
-    ]).then(async () => {
-      this.spinner.text = 'Filling form..';
-      const emailField = await this.loginPage.$('input[name="email"]');
-      const pwdField = await this.loginPage.$('input[name="password"]');
-      const submitBtn = await this.loginPage.$('button[type=submit]');
-      await emailField.type(email);
-      await pwdField.type(pwd);
-      await submitBtn.click({
-        waitUntil: 'networkidle0',
-      });
-      this.spinner.text = 'Form submitted';
-    }).catch((e) => {
-      throw new DiscordError('Filling login form failed', e);
-    });
-  }
     /**
    * @description Wait for the tokenFetched event to be fired
    * @returns {Promise} The tokenFetched event has been fired
